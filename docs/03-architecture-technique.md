@@ -116,36 +116,43 @@ flowchart TB
 
 Chaque module suit le même découpage : `controller` (routes) → `service` (règles métier) → `repository` (accès base) + `dto` (validation).
 
-## Structure du dépôt (monorepo)
+## Structure des dépôts (dépôts séparés)
 
+Pour permettre un déploiement, des pipelines CI/CD et des cycles de vie indépendants, le front-end et le back-end sont séparés en deux dépôts distincts :
+
+### 1. Dépôt Front-end (`geodata-base-84-web`)
 ```
-geodata-base-84/
-├── apps/
-│   ├── web/                     # React + TanStack
-│   │   ├── src/
-│   │   │   ├── routes/          # fichiers de routes TanStack
-│   │   │   │   ├── $lang/
-│   │   │   │   │   ├── index.tsx
-│   │   │   │   │   ├── tessera/carte.tsx
-│   │   │   │   │   └── ...
-│   │   │   │   └── admin/
-│   │   │   ├── features/        # demande-etude, rdv, carte, signalement...
-│   │   │   ├── components/ui/   # design system
-│   │   │   ├── lib/api.ts       # client HTTP typé
-│   │   │   └── i18n/
-│   │   └── vite.config.ts
-│   └── api/                     # NestJS
-│       ├── src/modules/
-│       ├── prisma/schema.prisma
-│       └── test/
-├── packages/
-│   ├── shared/                  # schémas Zod, types, constantes (aléas, statuts)
-│   └── config/                  # eslint, tsconfig
-├── infra/                       # Terraform ou scripts gcloud
-└── .github/workflows/           # CI/CD
+geodata-base-84-web/
+├── src/
+│   ├── routes/          # fichiers de routes TanStack
+│   │   ├── $lang/
+│   │   │   ├── index.tsx
+│   │   │   ├── tessera/carte.tsx
+│   │   │   └── ...
+│   │   └── admin/
+│   ├── features/        # demande-etude, rdv, carte, signalement...
+│   ├── components/ui/   # design system
+│   ├── lib/api.ts       # client HTTP typé
+│   ├── types/           # schémas Zod, types et contrats d'API
+│   └── i18n/
+├── vite.config.ts
+├── Dockerfile
+└── .github/workflows/   # CI/CD déploiement indépendant (Cloud Run / CDN)
 ```
 
-Le paquet `shared` évite de dupliquer les règles : la liste des aléas, les statuts de demande et les schémas de formulaire sont écrits une fois et utilisés par le front et l'API.
+### 2. Dépôt Back-end (`geodata-base-84-api`)
+```
+geodata-base-84-api/
+├── src/
+│   ├── modules/         # modules NestJS (auth, requests, content...)
+│   └── common/          # schémas Zod, DTOs partagés, constantes (aléas, statuts)
+├── prisma/schema.prisma
+├── test/
+├── Dockerfile
+└── .github/workflows/   # CI/CD déploiement indépendant (Cloud Run API)
+```
+
+Les contrats d'API et types partagés (DTOs, schémas de validation) peuvent être synchronisés soit via la documentation Swagger / OpenAPI générée par NestJS, soit dupliqués sous forme de types/Zod légers dans chaque projet.
 
 ## Flux type : soumission d'une demande d'étude
 
@@ -191,4 +198,4 @@ La carte, les formulaires et le back-office restent rendus côté client.
 | ADR-03 | Upload direct navigateur → GCS | Ne surcharge pas Cloud Run, gros fichiers SHP | Upload via l'API |
 | ADR-04 | Back-office dans la même app React | Un seul déploiement, mêmes composants | CMS headless externe |
 | ADR-05 | Couches stockées en GeoJSON simplifié + original | Affichage rapide, original conservé pour export | Tuiles vectorielles (surdimensionné au départ) |
-| ADR-06 | Monorepo avec paquet partagé | Schémas de validation communs | Deux dépôts |
+| ADR-06 | Dépôts séparés (Front-end & Back-end) | Déploiements, pipelines CI/CD et cycles de vie indépendants | Monorepo |

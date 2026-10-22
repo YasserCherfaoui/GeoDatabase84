@@ -14,7 +14,7 @@ gantt
   section Lot 1 — Vitrine
   Charte et maquettes            :l1a, 2026-11-02, 10d
   Validation maquettes           :milestone, m1, after l1a, 0d
-  Socle technique (monorepo, CI) :l1b, 2026-11-02, 5d
+  Socle technique (dépôts séparés, CI) :l1b, 2026-11-02, 5d
   API, auth, modèle de données   :l1c, after l1b, 10d
   Pages volets + contenus        :l1d, after l1a, 15d
   Demande d'étude + emails       :l1e, after l1c, 7d
